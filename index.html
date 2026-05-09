@@ -7,8 +7,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Chosen Palette: Warm Neutrals & Indigo Accent -->
-    <!-- Application Structure Plan: The SPA uses an interactive "Wizard" approach. Users first select context (Language, Device, Role), which filters the documentation. The redundancy in the checklist section was removed to unify the state management; the global "Role" selector now drives both the step-by-step instructions and the pre-meeting checklist. This reduces cognitive friction and ensures a single source of truth for the user's current context. -->
-    <!-- Visualization & Content Choices: Source Checklist -> Goal: Ensure Readiness -> Presentation: Dynamic Checklist linked to global role -> Interaction: Checkbox state persists in session -> Justification: Linking the checklist to the main selector simplifies the UI. | Troubleshooting -> Goal: Support -> Viz: Donut Chart -> Method: Canvas/Chart.js. Confirming NO SVG/Mermaid. -->
+    <!-- Application Structure Plan: The SPA uses an interactive "Wizard" approach. Users first select context (Language, Device, Role), which filters the documentation. Following user feedback from latest Teams screenshots, the scheduling section for hosts has been updated to highlight the "Series" button in the top toolbar. The UI ensures that host-only features appear dynamically, providing a tailored path for organizers. -->
+    <!-- Visualization & Content Choices: Source Checklist -> Goal: Ensure Readiness -> Presentation: Dynamic Checklist linked to global role -> Interaction: Checkbox state persists in session. | Scheduling Guide -> Goal: Educate Host -> Presentation: Updated steps matching the 'Series' button UI. | Troubleshooting -> Goal: Support -> Viz: Donut Chart -> Method: Canvas/Chart.js. Confirming NO SVG/Mermaid. -->
     <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
     <style>
         body { background-color: #f8fafc; }
@@ -82,6 +82,17 @@
             </div>
             <p id="context-note" class="text-slate-600 mb-6 bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r text-sm"></p>
             <div id="steps-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"></div>
+        </section>
+
+        <!-- Scheduling Section updated with 'Series' button info -->
+        <section id="scheduling-section" class="hidden bg-slate-50 rounded-2xl border border-slate-200 p-6 md:p-8">
+            <div class="flex items-center mb-6">
+                <div class="h-8 w-2 bg-emerald-500 rounded-full mr-3"></div>
+                <h3 id="scheduling-header" class="text-2xl font-bold text-slate-800">設定定期會議</h3>
+            </div>
+            <div id="scheduling-content" class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Injected via JS -->
+            </div>
         </section>
 
         <section id="checklist-section" class="bg-indigo-900 rounded-2xl shadow-xl p-6 md:p-8 text-white">
@@ -178,6 +189,21 @@
                         { title: "Setup", text: "Enter your name, check your camera/mic, and tap 'Join meeting'.", icon: "🎥" }
                     ]
                 },
+                schedulingHeader: "Scheduling Recurring Meetings",
+                schedulingData: {
+                    desktop: [
+                        "Go to the **Calendar** tab on the left sidebar.",
+                        "Click the **New meeting** button in the top right.",
+                        "In the popup window, click the **Series** button in the top toolbar.",
+                        "Configure the recurrence frequency (Daily, Weekly, etc.) and set an end date."
+                    ],
+                    mobile: [
+                        "Tap the **Calendar** icon at the bottom of the app.",
+                        "Tap the **+** (plus) icon to create a new event.",
+                        "Tap on the **Repeat** option.",
+                        "Set your recurrence pattern and tap **Done**."
+                    ]
+                },
                 checklistTitle: "Pre-Meeting Checklist",
                 checklistIntro: "To ensure a smooth meeting experience, complete these checks before starting. This list provides dynamic suggestions based on your role.",
                 checklists: {
@@ -253,6 +279,21 @@
                         { title: "設定加入", text: "輸入姓名，確認相機與麥克風狀態後加入。", icon: "🎥" }
                     ]
                 },
+                schedulingHeader: "設定定期會議",
+                schedulingData: {
+                    desktop: [
+                        "點擊左側工具列的 **行事曆** 分頁。",
+                        "點擊右上角的 **新會議** 按鈕。",
+                        "在彈出的視窗頂端，點擊工具列中的 **週期性會議 (Series)** 按鈕。",
+                        "設定您想要的重複頻率（每日、每週等）與結束日期。"
+                    ],
+                    mobile: [
+                        "點擊 App 下方的 **行事曆** 圖示。",
+                        "點擊右下角的 **+** (加號) 圖示來建立新活動。",
+                        "點擊 **重複** 選項。",
+                        "設定您的重複週期後點擊 **完成**。"
+                    ]
+                },
                 checklistTitle: "會前檢查清單",
                 checklistIntro: "為確保會議進行順利，請在開始前完成以下檢查。此清單根據您的角色提供動態建議。",
                 checklists: {
@@ -262,7 +303,7 @@
                         "檢查大廳等候與簡報者權限設定。",
                         "測試麥克風、相機及螢幕分享功能。",
                         "及時准許大廳中等待的參與者進入。",
-                        "必要時使用「參與者」面板進行靜音管理；若需防止與會者自行開啟麥克風，請預先調整會議選項。"
+                        "必要時使用「參與者」面板進行靜音管理；若需防止與與會者自行開啟麥克風，請預先調整會議選項。"
                     ],
                     guest: [
                         "使用主持人提供的最新會議連結。",
@@ -300,6 +341,7 @@
             state.device = device;
             updateButtons('device', device, ['desktop', 'mobile']);
             renderSteps();
+            renderScheduling();
         }
 
         function setRole(role) {
@@ -307,6 +349,7 @@
             updateButtons('role', role, ['host', 'guest']);
             renderSteps();
             renderChecklist();
+            renderScheduling();
         }
 
         function updateButtons(type, active, options) {
@@ -337,9 +380,11 @@
             document.getElementById('trouble-title').textContent = t.troubleTitle;
             document.getElementById('trouble-desc').textContent = t.troubleDesc;
             document.getElementById('footer-text').textContent = t.footerText;
+            document.getElementById('scheduling-header').textContent = t.schedulingHeader;
             
             renderSteps();
             renderChecklist();
+            renderScheduling();
             renderTable(t);
             renderChart(t);
         }
@@ -363,6 +408,36 @@
             });
         }
 
+        function renderScheduling() {
+            const section = document.getElementById('scheduling-section');
+            if (state.role !== 'host') {
+                section.classList.add('hidden');
+                return;
+            }
+            section.classList.remove('hidden');
+
+            const t = i18n[state.lang];
+            const data = t.schedulingData[state.device];
+            const container = document.getElementById('scheduling-content');
+            
+            const listHtml = data.map(item => `
+                <li class="flex items-start mb-3">
+                    <span class="flex-shrink-0 w-6 h-6 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center text-xs font-bold mr-3 mt-0.5">✓</span>
+                    <span class="text-slate-700 text-sm md:text-base">${item}</span>
+                </li>
+            `).join('');
+
+            container.innerHTML = `
+                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm col-span-full">
+                    <h4 class="font-bold text-slate-800 mb-4 flex items-center">
+                        <span class="mr-2">${state.device === 'desktop' ? '💻' : '📱'}</span>
+                        ${state.device === 'desktop' ? 'Desktop Instructions' : 'Mobile App Instructions'}
+                    </h4>
+                    <ul class="space-y-1">${listHtml}</ul>
+                </div>
+            `;
+        }
+
         function renderChecklist() {
             const role = state.role;
             const t = i18n[state.lang];
@@ -370,7 +445,6 @@
             const container = document.getElementById('checklist-content');
             const badge = document.getElementById('checklist-role-badge');
             
-            // Update the badge to reflect the current role
             badge.textContent = role.toUpperCase();
             badge.className = role === 'host' ? 
                 "px-2 py-1 bg-indigo-500 text-[10px] font-bold uppercase rounded" : 
