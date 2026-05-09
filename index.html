@@ -7,7 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Chosen Palette: Warm Neutrals & Indigo Accent -->
-    <!-- Application Structure Plan: The SPA uses an interactive "Wizard" approach. Users first select context (Language, Device, Role), which filters the documentation. Following the setup steps, a new "Interactive Checklist" section has been added. This section bridges the gap between installation and the meeting itself, ensuring users are operationally ready. Finally, a troubleshooting dashboard provides data-driven insights into common pitfalls. This flow ensures the user moves from 'What do I need?' to 'Am I ready?' to 'How do I fix issues?'. -->
+    <!-- Application Structure Plan: The SPA uses an interactive "Wizard" approach. Users first select context (Language, Device, Role), which filters the documentation. Following the setup steps, an "Interactive Checklist" section bridges the gap between installation and the meeting itself. Finally, a troubleshooting dashboard provides data-driven insights into common pitfalls. This flow ensures the user moves from 'What do I need?' to 'Am I ready?' to 'How do I fix issues?'. -->
     <!-- Visualization & Content Choices: Source Checklist -> Goal: Ensure Readiness -> Presentation: Interactive Tabbed Checklist -> Interaction: Tab switching and checkbox state -> Justification: Checklists reduce human error in technical setups. | Troubleshooting -> Goal: Support -> Viz: Donut Chart -> Method: Canvas/Chart.js. Confirming NO SVG/Mermaid. -->
     <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
     <style>
@@ -185,12 +185,12 @@
                 checklistIntro: "To ensure a smooth meeting experience, complete these checks before starting. This list provides dynamic suggestions based on your role.",
                 checklists: {
                     host: [
-                        "Sign in to Teams desktop app.",
+                        "Sign in to Teams desktop app with the provided account.",
                         "Check meeting date, time, and link.",
                         "Review lobby and presenter settings.",
                         "Test mic, camera, and screen sharing.",
                         "Admit participants from the lobby.",
-                        "Use People > Mute all if needed."
+                        "Use the Participants panel to manage muting when needed; if you need to stop attendees from turning their microphones back on, adjust the meeting options in advance."
                     ],
                     guest: [
                         "Use the latest meeting link.",
@@ -206,7 +206,7 @@
                 troubleData: [
                     { q: "'Join on web' missing?", a: "Use a desktop computer. Mobile requires the app." },
                     { q: "Mic/Camera not working?", a: "Check browser padlock icon or System Privacy settings." },
-                    { q: "Safari Users (Mac)", a: "We recommend Chrome, Edge, or the Desktop App." },
+                    { q: "Safari users (Mac)", a: "Safari supports Teams on the web, but if you run into permissions or compatibility issues, try Chrome, Edge, or the desktop app instead." },
                     { q: "Stuck in 'Lobby'?", a: "If you are waiting in the lobby, stay on that screen until the organizer admits you." }
                 ],
                 chartLabel: "Issue Frequency",
@@ -265,7 +265,7 @@
                         "檢查大廳等候與簡報者權限設定。",
                         "測試麥克風、相機及螢幕分享功能。",
                         "及時准許大廳中等待的參與者進入。",
-                        "必要時使用「參與者」面板進行「全體靜音」。"
+                        "必要時使用「參與者」面板進行靜音管理；若需防止與會者自行開啟麥克風，請預先調整會議選項。"
                     ],
                     guest: [
                         "使用主持人提供的最新會議連結。",
@@ -281,7 +281,7 @@
                 troubleData: [
                     { q: "找不到網頁加入？", a: "請使用電腦。行動裝置必須安裝 App。" },
                     { q: "麥克風/相機無效？", a: "檢查瀏覽器網址列鎖頭圖示或系統隱私權設定。" },
-                    { q: "Safari 使用者 (Mac)", a: "我們建議使用 Chrome、Edge 或桌面版 App。" },
+                    { q: "Safari 使用者 (Mac)", a: "Safari 可支援 Teams 網頁版，但若遇到權限或相容性問題，建議改用 Chrome、Edge 或桌面版 App。" },
                     { q: "卡在「大廳」？", a: "若畫面顯示您正在大廳等待，請留在該畫面，等待主持人允許您進入。" }
                 ],
                 chartLabel: "常見問題頻率",
