@@ -7,8 +7,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Chosen Palette: Warm Neutrals & Indigo Accent -->
-    <!-- Application Structure Plan: The SPA uses an interactive "Wizard" approach. Users first select context (Language, Device, Role), which filters the documentation. Following the setup steps, an "Interactive Checklist" section bridges the gap between installation and the meeting itself. Finally, a troubleshooting dashboard provides data-driven insights into common pitfalls. This flow ensures the user moves from 'What do I need?' to 'Am I ready?' to 'How do I fix issues?'. -->
-    <!-- Visualization & Content Choices: Source Checklist -> Goal: Ensure Readiness -> Presentation: Interactive Tabbed Checklist -> Interaction: Tab switching and checkbox state -> Justification: Checklists reduce human error in technical setups. | Troubleshooting -> Goal: Support -> Viz: Donut Chart -> Method: Canvas/Chart.js. Confirming NO SVG/Mermaid. -->
+    <!-- Application Structure Plan: The SPA uses an interactive "Wizard" approach. Users first select context (Language, Device, Role), which filters the documentation. The redundancy in the checklist section was removed to unify the state management; the global "Role" selector now drives both the step-by-step instructions and the pre-meeting checklist. This reduces cognitive friction and ensures a single source of truth for the user's current context. -->
+    <!-- Visualization & Content Choices: Source Checklist -> Goal: Ensure Readiness -> Presentation: Dynamic Checklist linked to global role -> Interaction: Checkbox state persists in session -> Justification: Linking the checklist to the main selector simplifies the UI. | Troubleshooting -> Goal: Support -> Viz: Donut Chart -> Method: Canvas/Chart.js. Confirming NO SVG/Mermaid. -->
     <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
     <style>
         body { background-color: #f8fafc; }
@@ -84,17 +84,15 @@
             <div id="steps-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"></div>
         </section>
 
-        <section class="bg-indigo-900 rounded-2xl shadow-xl p-6 md:p-8 text-white">
+        <section id="checklist-section" class="bg-indigo-900 rounded-2xl shadow-xl p-6 md:p-8 text-white">
             <div class="mb-8">
-                <h3 id="checklist-title" class="text-2xl font-bold mb-2">會前檢查清單</h3>
+                <div class="flex items-center gap-3 mb-2">
+                    <span id="checklist-role-badge" class="px-2 py-1 bg-indigo-500 text-[10px] font-bold uppercase rounded">HOST</span>
+                    <h3 id="checklist-title" class="text-2xl font-bold">會前檢查清單</h3>
+                </div>
                 <p id="checklist-intro" class="text-indigo-200 max-w-2xl">
                     為確保會議進行順利，請在開始前完成以下檢查。此清單根據您的角色提供動態建議，協助您在技術與流程上做好全面準備。
                 </p>
-            </div>
-
-            <div class="flex bg-indigo-800/50 p-1 rounded-xl w-fit mb-8">
-                <button id="cl-btn-host" class="px-6 py-2 rounded-lg text-sm font-bold transition-all" onclick="renderChecklist('host')">Host</button>
-                <button id="cl-btn-guest" class="px-6 py-2 rounded-lg text-sm font-bold transition-all" onclick="renderChecklist('guest')">Guest</button>
             </div>
 
             <div id="checklist-content" class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4">
@@ -133,8 +131,7 @@
         const state = {
             lang: 'zh',
             device: 'desktop',
-            role: 'host',
-            checklistRole: 'host'
+            role: 'host'
         };
 
         const i18n = {
@@ -309,7 +306,7 @@
             state.role = role;
             updateButtons('role', role, ['host', 'guest']);
             renderSteps();
-            renderChecklist(role);
+            renderChecklist();
         }
 
         function updateButtons(type, active, options) {
@@ -342,7 +339,7 @@
             document.getElementById('footer-text').textContent = t.footerText;
             
             renderSteps();
-            renderChecklist(state.role);
+            renderChecklist();
             renderTable(t);
             renderChart(t);
         }
@@ -366,22 +363,18 @@
             });
         }
 
-        function renderChecklist(role) {
-            state.checklistRole = role;
+        function renderChecklist() {
+            const role = state.role;
             const t = i18n[state.lang];
             const items = t.checklists[role];
             const container = document.getElementById('checklist-content');
+            const badge = document.getElementById('checklist-role-badge');
             
-            // Toggle buttons
-            const hostBtn = document.getElementById('cl-btn-host');
-            const guestBtn = document.getElementById('cl-btn-guest');
-            if (role === 'host') {
-                hostBtn.className = "px-6 py-2 rounded-lg text-sm font-bold bg-white text-indigo-900 shadow-sm transition-all";
-                guestBtn.className = "px-6 py-2 rounded-lg text-sm font-bold text-indigo-200 hover:text-white transition-all";
-            } else {
-                guestBtn.className = "px-6 py-2 rounded-lg text-sm font-bold bg-white text-indigo-900 shadow-sm transition-all";
-                hostBtn.className = "px-6 py-2 rounded-lg text-sm font-bold text-indigo-200 hover:text-white transition-all";
-            }
+            // Update the badge to reflect the current role
+            badge.textContent = role.toUpperCase();
+            badge.className = role === 'host' ? 
+                "px-2 py-1 bg-indigo-500 text-[10px] font-bold uppercase rounded" : 
+                "px-2 py-1 bg-emerald-500 text-[10px] font-bold uppercase rounded";
 
             container.innerHTML = items.map((item, i) => `
                 <label class="checklist-item flex items-start gap-3 p-3 bg-indigo-800/30 rounded-lg cursor-pointer hover:bg-indigo-800/50 transition-all">
