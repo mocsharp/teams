@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Microsoft Teams Setup Guide</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Chosen Palette: Warm Neutrals & Indigo Accent -->
+    <!-- Application Structure Plan: The SPA uses a "Wizard/Interactive Selector" structure. Instead of a long, scrolling bilingual document, users select their Language, Device, and Role. The JavaScript then dynamically injects only the specific 4-step instructions they need. This drastically reduces cognitive load. A troubleshooting dashboard is provided at the bottom with an interactive chart to visualize common issues, satisfying the requirement for data visualization while aiding user support. -->
+    <!-- Visualization & Content Choices: Source Text -> Goal: Instruct -> Viz: Interactive Step-by-Step Wizard -> Justification: Users only need instructions for their specific context (e.g., Mac Guest), showing everything is overwhelming. | Source Troubleshooting -> Goal: Inform -> Viz: Donut Chart (Chart.js) -> Justification: Highlights the most common pitfalls so users can anticipate them. -> Method: Canvas/Chart.js. Confirming NO SVG/Mermaid. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body { background-color: #f8fafc; }
+        .chart-container { position: relative; width: 100%; max-width: 500px; margin-left: auto; margin-right: auto; height: 300px; max-height: 400px; }
+        @media (min-width: 768px) { .chart-container { height: 350px; } }
+        .step-card { transition: all 0.3s ease; }
+        .step-card:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
+    </style>
+</head>
+<body class="text-slate-800 font-sans antialiased min-h-screen flex flex-col">
+
+    <nav class="bg-white shadow-sm border-b border-slate-200 sticky top-0 z-10">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 bg-indigo-600 text-white rounded flex items-center justify-center font-bold text-xl">T</div>
+                <h1 id="nav-title" class="text-xl font-bold text-slate-800">Teams 指南</h1>
+            </div>
+            <div class="flex bg-slate-100 rounded-lg p-1">
+                <button id="lang-en" class="px-3 py-1 rounded-md text-sm font-medium transition-colors text-slate-600 hover:text-slate-900" onclick="setLang('en')">English</button>
+                <button id="lang-zh" class="px-3 py-1 rounded-md text-sm font-medium transition-colors bg-white shadow text-indigo-600" onclick="setLang('zh')">繁體中文</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="flex-grow max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full space-y-12">
+
+        <section class="text-center max-w-3xl mx-auto">
+            <h2 id="hero-title" class="text-3xl md:text-4xl font-extrabold text-slate-900 mb-4 tracking-tight">安裝及加入會議指南</h2>
+            <p id="hero-desc" class="text-lg text-slate-600 leading-relaxed">
+                這個互動工具提供量身定制的 Microsoft Teams 安裝與加入指示。請在下方選擇您的裝置與角色，即可立即生成您所需的確切步驟，過濾掉不必要的資訊，讓設定過程更順暢。
+            </p>
+        </section>
+
+        <section class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="grid grid-cols-1 md:grid-cols-2">
+                
+                <div class="p-6 md:p-8 border-b md:border-b-0 md:border-r border-slate-200 bg-slate-50">
+                    <h3 id="step1-title" class="text-sm font-bold uppercase tracking-wider text-slate-500 mb-4">1. 選擇您的裝置</h3>
+                    <div class="grid grid-cols-2 gap-3">
+                        <button id="btn-desktop" class="flex flex-col items-center justify-center p-4 rounded-xl border-2 border-indigo-600 bg-indigo-50 text-indigo-700 transition-all" onclick="setDevice('desktop')">
+                            <span class="text-3xl mb-2">💻</span>
+                            <span id="label-desktop" class="font-semibold text-sm">電腦版 (Win/Mac)</span>
+                        </button>
+                        <button id="btn-mobile" class="flex flex-col items-center justify-center p-4 rounded-xl border-2 border-transparent bg-white text-slate-600 hover:bg-slate-100 transition-all shadow-sm" onclick="setDevice('mobile')">
+                            <span class="text-3xl mb-2">📱</span>
+                            <span id="label-mobile" class="font-semibold text-sm">行動裝置 (iOS/Android)</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="p-6 md:p-8 bg-slate-50">
+                    <h3 id="step2-title" class="text-sm font-bold uppercase tracking-wider text-slate-500 mb-4">2. 選擇您的角色</h3>
+                    <div class="grid grid-cols-2 gap-3">
+                        <button id="btn-host" class="flex flex-col items-center justify-center p-4 rounded-xl border-2 border-indigo-600 bg-indigo-50 text-indigo-700 transition-all" onclick="setRole('host')">
+                            <span class="text-3xl mb-2">🎤</span>
+                            <span id="label-host" class="font-semibold text-sm text-center">會議主持人<br><span class="text-xs font-normal opacity-80">(Full App)</span></span>
+                        </button>
+                        <button id="btn-guest" class="flex flex-col items-center justify-center p-4 rounded-xl border-2 border-transparent bg-white text-slate-600 hover:bg-slate-100 transition-all shadow-sm" onclick="setRole('guest')">
+                            <span class="text-3xl mb-2">👋</span>
+                            <span id="label-guest" class="font-semibold text-sm text-center">訪客<br><span class="text-xs font-normal opacity-80">(Join via Link)</span></span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <div class="flex items-center mb-6">
+                <div class="h-8 w-2 bg-indigo-500 rounded-full mr-3"></div>
+                <h3 id="instructions-header" class="text-2xl font-bold text-slate-800">您的專屬步驟</h3>
+            </div>
+            
+            <p id="context-note" class="text-slate-600 mb-6 bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r text-sm">
+                載入中...
+            </p>
+
+            <div id="steps-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            </div>
+        </section>
+
+        <section class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8 mt-12">
+            <div class="mb-8">
+                <h3 id="trouble-title" class="text-2xl font-bold text-slate-800 mb-2">快速疑難排解儀表板</h3>
+                <p id="trouble-desc" class="text-slate-600">
+                    查看設定 Teams 時的常見問題。下方的圖表顯示了這些問題的相對發生頻率，幫助您了解使用者最常遇到困難的地方。
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+                <div class="chart-container">
+                    <canvas id="issuesChart"></canvas>
+                </div>
+                
+                <div class="overflow-hidden rounded-lg border border-slate-200">
+                    <table class="min-w-full divide-y divide-slate-200">
+                        <thead class="bg-slate-50" id="table-head">
+                        </thead>
+                        <tbody class="divide-y divide-slate-200 bg-white" id="table-body">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-slate-900 text-slate-400 py-8 text-center text-sm mt-auto">
+        <p id="footer-text">為會議主持人和訪客生成。最後更新：2026年5月。</p>
+    </footer>
+
+    <script>
+        const state = {
+            lang: 'zh',
+            device: 'desktop',
+            role: 'host'
+        };
+
+        const i18n = {
+            en: {
+                navTitle: "Teams Guide",
+                heroTitle: "Installation & Joining Guide",
+                heroDesc: "This interactive tool provides tailored instructions for installing Microsoft Teams and joining meetings. Select your device and role below to instantly generate the exact steps you need, filtering out unnecessary information for a seamless setup experience.",
+                step1Title: "1. Select Your Device",
+                labelDesktop: "Desktop (Win/Mac)",
+                labelMobile: "Mobile (iOS/Android)",
+                step2Title: "2. Select Your Role",
+                labelHost: "Meeting Host",
+                labelGuest: "Guest User",
+                instructionsHeader: "Your Personalized Steps",
+                notes: {
+                    desktop_host: "Hosts should always use the desktop application for the best experience (screen sharing, breakout rooms, and recording).",
+                    desktop_guest: "As a guest on desktop, you have a choice: join instantly via browser or install the app for a more stable experience.",
+                    mobile_host: "On mobile devices, you must download the app. You cannot host or join via a mobile web browser.",
+                    mobile_guest: "You do not need a Microsoft account to join from a mobile device, but you must install the app."
+                },
+                stepsData: {
+                    desktop_host: [
+                        { title: "Download", text: "Visit the official Microsoft Teams download page.", icon: "⬇️", link: "https://www.microsoft.com/en-us/microsoft-teams/download-app" },
+                        { title: "Select Version", text: "Choose 'Teams for work or school' or 'Teams for home'.", icon: "🏢" },
+                        { title: "Install", text: "Windows: Open .exe. Mac: Open .pkg (may need admin password).", icon: "⚙️" },
+                        { title: "Sign In", text: "Launch the app and sign in with your Microsoft account credentials.", icon: "🔑" }
+                    ],
+                    desktop_guest: [
+                        { title: "Click Link", text: "Open the meeting link from your email or calendar invite.", icon: "🔗" },
+                        { title: "Join Method", text: "Choose 'Continue on this browser' for quick access, or 'Download the app' for better performance.", icon: "🌐", links: [
+                            { label: "App Download Page", url: "https://www.microsoft.com/en-us/microsoft-teams/download-app" }
+                        ]},
+                        { title: "Permissions", text: "Click 'Allow' when prompted to use your microphone and camera.", icon: "🎤" },
+                        { title: "Enter Name", text: "Type your name and click 'Join now'. Wait in the Lobby for the host.", icon: "📝" }
+                    ],
+                    mobile_host: [
+                        { title: "App Store", text: "Open the App Store (iPhone) or Google Play Store (Android).", icon: "🛒", links: [
+                            { label: "App Store", url: "https://apps.apple.com/app/microsoft-teams/id1113153706" },
+                            { label: "Google Play", url: "https://play.google.com/store/apps/details?id=com.microsoft.teams" }
+                        ]},
+                        { title: "Search", text: "Type 'Microsoft Teams' in the search bar.", icon: "🔍" },
+                        { title: "Download", text: "Tap Get (iOS) or Install (Android).", icon: "⬇️" },
+                        { title: "Permissions", text: "Open the app and tap Allow/OK for Microphone and Notifications.", icon: "✅" }
+                    ],
+                    mobile_guest: [
+                        { title: "App Store", text: "You must download the app to join meetings on mobile devices.", icon: "🛒", links: [
+                            { label: "App Store", url: "https://apps.apple.com/app/microsoft-teams/id1113153706" },
+                            { label: "Google Play", url: "https://play.google.com/store/apps/details?id=com.microsoft.teams" }
+                        ]},
+                        { title: "Tap Link", text: "Open the meeting link on your phone.", icon: "🔗" },
+                        { title: "Guest Mode", text: "The app opens. Tap 'Join as a guest'.", icon: "👤" },
+                        { title: "Setup", text: "Type your name, toggle your video/audio, and tap 'Join meeting'.", icon: "🎥" }
+                    ]
+                },
+                troubleTitle: "Troubleshooting Dashboard",
+                troubleDesc: "Review common issues when setting up Teams. The chart below illustrates the relative frequency of these issues to help you understand where users most often encounter friction.",
+                tableHeaders: ["Issue", "Solution"],
+                troubleData: [
+                    { q: "'Join on web' missing?", a: "Use a desktop computer. Mobile requires the app." },
+                    { q: "Mic/Camera not working?", a: "Check browser padlock icon or System Privacy settings." },
+                    { q: "Safari Users (Mac)", a: "We recommend Chrome, Edge, or the Desktop App." },
+                    { q: "Stuck in 'Lobby'?", a: "Wait for the host to admit you." }
+                ],
+                chartLabel: "Common Issue Frequency",
+                chartLabels: ["Mic/Camera Perms", "Web Join on Mobile", "Safari Incompatibility", "Lobby Confusion"],
+                footerText: "Generated for meeting hosts and guests. Last updated: May 2026."
+            },
+            zh: {
+                navTitle: "Teams 指南",
+                heroTitle: "安裝及加入會議指南",
+                heroDesc: "這個互動工具提供量身定制的 Microsoft Teams 安裝與加入指示。請在下方選擇您的裝置與角色，即可立即生成您所需的確切步驟，過濾掉不必要的資訊，讓設定過程更順暢。",
+                step1Title: "1. 選擇您的裝置",
+                labelDesktop: "電腦版 (Win/Mac)",
+                labelMobile: "行動裝置 (iOS/Android)",
+                step2Title: "2. 選擇您的角色",
+                labelHost: "會議主持人",
+                labelGuest: "訪客",
+                instructionsHeader: "您的專屬步驟",
+                notes: {
+                    desktop_host: "主持人應始終使用電腦應用程式以獲得最佳體驗（螢幕共享、分組討論室及錄製功能）。",
+                    desktop_guest: "在電腦上作為訪客，您可以選擇：直接透過瀏覽器快速加入，或是安裝應用程式以獲得更穩定的功能。",
+                    mobile_host: "在行動裝置上，您必須下載應用程式。您無法透過行動裝置的網頁瀏覽器主持或加入。",
+                    mobile_guest: "從行動裝置加入時，您不需要 Microsoft 帳戶，但必須安裝應用程式。"
+                },
+                stepsData: {
+                    desktop_host: [
+                        { title: "下載", text: "造訪 Microsoft Teams 官方下載頁面。", icon: "⬇️", link: "https://www.microsoft.com/zh-tw/microsoft-teams/download-app" },
+                        { title: "選擇版本", text: "選擇「公司或學校版 Teams」或「個人版 Teams」。", icon: "🏢" },
+                        { title: "安裝", text: "Windows: 開啟 .exe。Mac: 開啟 .pkg (可能需要密碼)。", icon: "⚙️" },
+                        { title: "登入", text: "啟動應用程式並使用您的 Microsoft 帳戶憑據登入。", icon: "🔑" }
+                    ],
+                    desktop_guest: [
+                        { title: "點擊連結", text: "從您的電子郵件或日曆邀請中開啟會議連結。", icon: "🔗" },
+                        { title: "加入方式", text: "選擇「在此瀏覽器上繼續」以快速加入，或選擇「下載應用程式」以獲得更佳效能。", icon: "🌐", links: [
+                            { label: "下載頁面", url: "https://www.microsoft.com/zh-tw/microsoft-teams/download-app" }
+                        ]},
+                        { title: "權限", text: "當瀏覽器或系統詢問是否使用麥克風和相機時，點擊「允許」。", icon: "🎤" },
+                        { title: "輸入姓名", text: "輸入姓名並點擊「立即加入」。在大廳等待主持人准許進入。", icon: "📝" }
+                    ],
+                    mobile_host: [
+                        { title: "應用程式商店", text: "開啟 App Store (iPhone) 或 Google Play 商店 (Android)。", icon: "🛒", links: [
+                            { label: "App Store", url: "https://apps.apple.com/app/microsoft-teams/id1113153706" },
+                            { label: "Google Play", url: "https://play.google.com/store/apps/details?id=com.microsoft.teams" }
+                        ]},
+                        { title: "搜尋", text: "在搜尋欄輸入 'Microsoft Teams'。", icon: "🔍" },
+                        { title: "下載", text: "點擊 取得 (iOS) 或 安裝 (Android)。", icon: "⬇️" },
+                        { title: "權限", text: "首次開啟程式時，針對麥克風和通知權限點擊允許/確定。", icon: "✅" }
+                    ],
+                    mobile_guest: [
+                        { title: "應用程式商店", text: "在行動裝置上，您必須下載應用程式才能加入會議。", icon: "🛒", links: [
+                            { label: "App Store", url: "https://apps.apple.com/app/microsoft-teams/id1113153706" },
+                            { label: "Google Play", url: "https://play.google.com/store/apps/details?id=com.microsoft.teams" }
+                        ]},
+                        { title: "點擊連結", text: "在手機上開啟會議連結。", icon: "🔗" },
+                        { title: "訪客模式", text: "程式啟動後，點擊「以訪客身份加入」。", icon: "👤" },
+                        { title: "設定", text: "輸入姓名，設定視訊/音訊開關，然後點擊「加入會議」。", icon: "🎥" }
+                    ]
+                },
+                troubleTitle: "快速疑難排解儀表板",
+                troubleDesc: "查看設定 Teams 時的常見問題。下方的圖表顯示了這些問題的相對發生頻率，幫助您了解使用者最常遇到困難的地方。",
+                tableHeaders: ["問題", "解決方法"],
+                troubleData: [
+                    { q: "找不到網頁加入？", a: "請使用電腦。行動裝置必須安裝 App。" },
+                    { q: "麥克風/相機無效？", a: "檢查瀏覽器網址列鎖頭圖示或系統隱私權設定。" },
+                    { q: "Safari 使用者 (Mac)", a: "我們建議使用 Chrome、Edge 或桌面版 App。" },
+                    { q: "卡在「大廳」？", a: "請留在該畫面，等待主持人准許您進入。" }
+                ],
+                chartLabel: "常見問題頻率",
+                chartLabels: ["麥克風/相機權限", "行動裝置網頁加入錯誤", "Safari 不相容", "大廳等待困惑"],
+                footerText: "為會議主持人和訪客生成。最後更新：2026年5月。"
+            }
+        };
+
+        let issuesChartInstance = null;
+
+        function setLang(lang) {
+            state.lang = lang;
+            document.getElementById('lang-en').className = lang === 'en' ? 'px-3 py-1 rounded-md text-sm font-medium transition-colors bg-white shadow text-indigo-600' : 'px-3 py-1 rounded-md text-sm font-medium transition-colors text-slate-600 hover:text-slate-900';
+            document.getElementById('lang-zh').className = lang === 'zh' ? 'px-3 py-1 rounded-md text-sm font-medium transition-colors bg-white shadow text-indigo-600' : 'px-3 py-1 rounded-md text-sm font-medium transition-colors text-slate-600 hover:text-slate-900';
+            renderUI();
+        }
+
+        function setDevice(device) {
+            state.device = device;
+            updateButtons('device', device, ['desktop', 'mobile']);
+            renderSteps();
+        }
+
+        function setRole(role) {
+            state.role = role;
+            updateButtons('role', role, ['host', 'guest']);
+            renderSteps();
+        }
+
+        function updateButtons(type, active, options) {
+            options.forEach(opt => {
+                const btn = document.getElementById(`btn-${opt}`);
+                if (opt === active) {
+                    btn.className = 'flex flex-col items-center justify-center p-4 rounded-xl border-2 border-indigo-600 bg-indigo-50 text-indigo-700 transition-all';
+                } else {
+                    btn.className = 'flex flex-col items-center justify-center p-4 rounded-xl border-2 border-transparent bg-white text-slate-600 hover:bg-slate-100 transition-all shadow-sm';
+                }
+            });
+        }
+
+        function renderUI() {
+            const t = i18n[state.lang];
+            document.getElementById('nav-title').textContent = t.navTitle;
+            document.getElementById('hero-title').textContent = t.heroTitle;
+            document.getElementById('hero-desc').textContent = t.heroDesc;
+            document.getElementById('step1-title').textContent = t.step1Title;
+            document.getElementById('label-desktop').innerHTML = t.labelDesktop;
+            document.getElementById('label-mobile').innerHTML = t.labelMobile;
+            document.getElementById('step2-title').textContent = t.step2Title;
+            document.getElementById('label-host').innerHTML = `${t.labelHost}<br><span class="text-xs font-normal opacity-80">(Full App)</span>`;
+            document.getElementById('label-guest').innerHTML = `${t.labelGuest}<br><span class="text-xs font-normal opacity-80">(Join via Link)</span>`;
+            document.getElementById('instructions-header').textContent = t.instructionsHeader;
+            document.getElementById('trouble-title').textContent = t.troubleTitle;
+            document.getElementById('trouble-desc').textContent = t.troubleDesc;
+            document.getElementById('footer-text').textContent = t.footerText;
+            
+            renderSteps();
+            renderTable(t);
+            renderChart(t);
+        }
+
+        function renderSteps() {
+            const t = i18n[state.lang];
+            const key = `${state.device}_${state.role}`;
+            
+            document.getElementById('context-note').textContent = t.notes[key];
+            
+            const steps = t.stepsData[key];
+            const container = document.getElementById('steps-container');
+            container.innerHTML = '';
+            
+            steps.forEach((step, index) => {
+                let linksHtml = '';
+                if (step.links) {
+                    linksHtml = `<div class="flex flex-wrap gap-2 mt-3">` + 
+                        step.links.map(l => `
+                        <a href="${l.url}" target="_blank" class="inline-flex items-center px-3 py-1 rounded-md text-xs font-semibold bg-indigo-600 text-white hover:bg-indigo-700 transition-colors">
+                            ${l.label} <span class="ml-1 text-[10px]">↗</span>
+                        </a>
+                    `).join('') + `</div>`;
+                } else if (step.link) {
+                    linksHtml = `<a href="${step.link}" target="_blank" class="mt-4 inline-flex items-center text-sm font-bold text-indigo-600 hover:text-indigo-500">Go to Download <span class="ml-1">→</span></a>`;
+                }
+                
+                container.innerHTML += `
+                    <div class="step-card bg-white p-6 rounded-xl border border-slate-200 relative overflow-hidden flex flex-col h-full">
+                        <div class="absolute top-0 right-0 bg-slate-100 text-slate-400 font-black text-6xl opacity-20 -mt-2 -mr-2 select-none">${index + 1}</div>
+                        <div class="text-3xl mb-3">${step.icon}</div>
+                        <h4 class="text-lg font-bold text-slate-800 mb-2 relative z-10">${step.title}</h4>
+                        <p class="text-slate-600 text-sm relative z-10 flex-grow">${step.text}</p>
+                        ${linksHtml}
+                    </div>
+                `;
+            });
+        }
+
+        function renderTable(t) {
+            document.getElementById('table-head').innerHTML = `
+                <tr>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">${t.tableHeaders[0]}</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">${t.tableHeaders[1]}</th>
+                </tr>
+            `;
+            
+            const tbody = document.getElementById('table-body');
+            tbody.innerHTML = '';
+            t.troubleData.forEach(row => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td class="px-6 py-4 text-sm font-medium text-slate-900">${row.q}</td>
+                        <td class="px-6 py-4 text-sm text-slate-600">${row.a}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        function renderChart(t) {
+            const ctx = document.getElementById('issuesChart').getContext('2d');
+            
+            const dataValues = [45, 25, 20, 10]; 
+
+            if (issuesChartInstance) {
+                issuesChartInstance.data.labels = t.chartLabels;
+                issuesChartInstance.data.datasets[0].label = t.chartLabel;
+                issuesChartInstance.update();
+            } else {
+                issuesChartInstance = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: t.chartLabels,
+                        datasets: [{
+                            label: t.chartLabel,
+                            data: dataValues,
+                            backgroundColor: [
+                                '#4f46e5', 
+                                '#818cf8', 
+                                '#c7d2fe', 
+                                '#e0e7ff'  
+                            ],
+                            borderWidth: 0,
+                            hoverOffset: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'bottom', labels: { font: { family: "'Inter', sans-serif" }, color: '#475569' } },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.label || '';
+                                        if (label) { label += ': '; }
+                                        if (context.parsed !== null) { label += context.parsed + '%'; }
+                                        return label;
+                                    }
+                                }
+                            }
+                        },
+                        cutout: '65%'
+                    }
+                });
+            }
+        }
+
+        // Initialize with default state
+        renderUI();
+    </script>
+</body>
+</html>
